@@ -35,7 +35,6 @@ public class EmployeeController {
     @PostMapping
     public ResponseEntity<Employee> createEmployee(@Valid @RequestBody Employee employee) {
         Employee savedEmployee = employeeService.saveEmployee(employee);
-        System.out.println(savedEmployee);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedEmployee);
     }
 
