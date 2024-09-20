@@ -13,8 +13,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
-                echo "Checked out branch: ${GIT_BRANCH} from repo: ${GIT_REPO_URL}"
+                git branch: '${GIT_BRANCH}', url: '${GIT_REPO_URL}'
+                echo 'Checked out branch: ${GIT_BRANCH} from repo: ${GIT_REPO_URL}'
             }
         }
 
@@ -68,13 +68,13 @@ pipeline {
                 script {
                     try {
                         if (isUnix()) {
-                            sh "docker build -t ${DOCKER_IMAGE} ."
+                            sh 'docker build -t ${DOCKER_IMAGE} .'
                         } else {
-                            bat "docker build -t ${DOCKER_IMAGE} ."
+                            bat 'docker build -t ${DOCKER_IMAGE} .'
                         }
-                        echo "Docker image built: ${DOCKER_IMAGE}"
+                        echo 'Docker image built: ${DOCKER_IMAGE}'
                     } catch (Exception e) {
-                        error "Docker image build failed: ${e.message}"
+                        error 'Docker image build failed: ${e.message}'
                     }
                 }
             }
@@ -84,7 +84,7 @@ pipeline {
             steps {
                 script {
                     try {
-                        withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        withCredentials([usernamePassword(credentialsId: '${DOCKERHUB_CREDENTIALS_ID}', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                             if (isUnix()) {
                                 sh """
                                 echo "${DOCKERHUB_PASSWORD}" | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
@@ -92,15 +92,15 @@ pipeline {
                                 docker push ${DOCKERHUB_USERNAME}/${DOCKER_REPO}:latest
                                 """
                             } else {
-                                bat """
+                                bat '''
                                 echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
                                 docker push ${DOCKER_IMAGE}
-                                """
+                                '''
                             }
                             echo "Docker image pushed to Docker Hub"
                         }
                     } catch (Exception e) {
-                        error "Docker push failed: ${e.message}"
+                        error 'Docker push failed: ${e.message}'
                     }
                 }
             }
@@ -116,10 +116,10 @@ pipeline {
                             docker run -d ${DOCKER_IMAGE}
                             """
                         } else {
-                            bat """
+                            bat '''
                             docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
                             docker run -d ${DOCKER_IMAGE}
-                            """
+                            '''
                         }
                         echo "Application deployed using Docker image: ${DOCKER_IMAGE}"
                     } catch (Exception e) {
