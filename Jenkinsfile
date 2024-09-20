@@ -6,6 +6,7 @@ pipeline {
         GIT_REPO_URL = 'https://github.com/kevin-mboni/employee-management.git'
         GIT_BRANCH = 'main'
         DOCKERHUB_CREDENTIALS_ID = '1'
+        DOCKER_REPO = 'employee-image'
     }
 
     stages {
@@ -92,7 +93,7 @@ pipeline {
                             } else {
                                 bat """
                                 docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%
-                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
+                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_REPO}
                                 docker push %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
                                 """
                             }
