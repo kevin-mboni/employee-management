@@ -11,7 +11,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Clone the repository
                 git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
                 echo "Checked out branch: ${GIT_BRANCH} from repo: ${GIT_REPO_URL}"
             }
@@ -66,7 +65,6 @@ pipeline {
             steps {
                 script {
                     try {
-                        // Build the Docker image
                         if (isUnix()) {
                             sh "docker build -t ${DOCKER_IMAGE} ."
                         } else {
@@ -84,7 +82,6 @@ pipeline {
             steps {
                 script {
                     try {
-                        // Login to Docker Hub and push the image
                         withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                             if (isUnix()) {
                                 sh """
@@ -112,7 +109,6 @@ pipeline {
             steps {
                 script {
                     try {
-                        // Stop and redeploy Docker container
                         if (isUnix()) {
                             sh """
                             docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
@@ -120,7 +116,7 @@ pipeline {
                             """
                         } else {
                             bat """
-                            docker stop $(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
+                            docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
                             docker run -d ${DOCKER_IMAGE}
                             """
                         }
@@ -135,7 +131,7 @@ pipeline {
 
     post {
         always {
-            cleanWs() // Clean the workspace after the job
+            cleanWs()
         }
         success {
             echo 'Pipeline succeeded!'
