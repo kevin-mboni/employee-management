@@ -7,7 +7,7 @@ pipeline {
         GIT_BRANCH = 'main'
         DOCKERHUB_CREDENTIALS_ID = '1'
         DOCKER_REPO = 'employee-image'
-        DOCKERHUB_CREDENTIALS = credentials('1')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
 
     stages {
@@ -93,7 +93,7 @@ pipeline {
                                 """
                             } else {
                                 bat """
-                                echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin
+                                echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
                                 docker push ${DOCKER_IMAGE}
                                 """
                             }
