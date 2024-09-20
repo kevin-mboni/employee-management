@@ -7,6 +7,7 @@ pipeline {
         GIT_BRANCH = 'main'
         DOCKERHUB_CREDENTIALS_ID = '1'
         DOCKER_REPO = 'employee-image'
+        DOCKERHUB_CREDENTIALS = credentials('1')
     }
 
     stages {
@@ -92,9 +93,8 @@ pipeline {
                                 """
                             } else {
                                 bat """
-                                echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USERNAME% --password-stdin
-                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_REPO}:latest
-                                docker push %DOCKERHUB_USERNAME%/${DOCKER_REPO}:latest
+                                echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin
+                                docker push ${DOCKER_IMAGE}
                                 """
                             }
                             echo "Docker image pushed to Docker Hub"
