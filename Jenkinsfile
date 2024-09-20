@@ -86,15 +86,15 @@ pipeline {
                         withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                             if (isUnix()) {
                                 sh """
-                                docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-                                docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}
-                                docker push ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}
+                                echo "${DOCKERHUB_PASSWORD}" | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                                docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USERNAME}/${DOCKER_REPO}:latest
+                                docker push ${DOCKERHUB_USERNAME}/${DOCKER_REPO}:latest
                                 """
                             } else {
                                 bat """
-                                docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%
-                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_REPO}
-                                docker push %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
+                                echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USERNAME% --password-stdin
+                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_REPO}:latest
+                                docker push %DOCKERHUB_USERNAME%/${DOCKER_REPO}:latest
                                 """
                             }
                             echo "Docker image pushed to Docker Hub"
