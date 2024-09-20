@@ -13,12 +13,19 @@ pipeline {
             steps {
                 // Clone the repository
                 git branch: "${GIT_BRANCH}", url: "${GIT_REPO_URL}"
+                echo "Checked out branch: ${GIT_BRANCH} from repo: ${GIT_REPO_URL}"
             }
         }
 
         stage('Build') {
             steps {
-                bat 'mvn clean compile'
+                script {
+                    if (isUnix()) {
+                        sh 'mvn clean compile'
+                    } else {
+                        bat 'mvn clean compile'
+                    }
+                }
                 echo 'Maven build completed'
             }
         }
@@ -26,10 +33,15 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    def hasTests = sh(script: 'find src/test/java -name "*.java" | wc -l', returnStdout: true).trim()
+                    def hasTests = isUnix() ? sh(script: 'find src/test/java -name "*.java" | wc -l', returnStdout: true).trim() : bat(script: 'dir /s /b src\\test\\java\\*.java | find /c ":"', returnStdout: true).trim()
+
                     if (hasTests != "0") {
                         echo "Running tests..."
-                        bat 'mvn test'
+                        if (isUnix()) {
+                            sh 'mvn test'
+                        } else {
+                            bat 'mvn test'
+                        }
                     } else {
                         echo "No tests found, skipping test stage"
                     }
@@ -39,7 +51,13 @@ pipeline {
 
         stage('Package') {
             steps {
-                bat 'mvn package -DskipTests'
+                script {
+                    if (isUnix()) {
+                        sh 'mvn package -DskipTests'
+                    } else {
+                        bat 'mvn package -DskipTests'
+                    }
+                }
                 echo 'Maven package completed'
             }
         }
@@ -49,7 +67,12 @@ pipeline {
                 script {
                     try {
                         // Build the Docker image
-                        bat "docker build -t ${DOCKER_IMAGE} ."
+                        if (isUnix()) {
+                            sh "docker build -t ${DOCKER_IMAGE} ."
+                        } else {
+                            bat "docker build -t ${DOCKER_IMAGE} ."
+                        }
+                        echo "Docker image built: ${DOCKER_IMAGE}"
                     } catch (Exception e) {
                         error "Docker image build failed: ${e.message}"
                     }
@@ -63,11 +86,20 @@ pipeline {
                     try {
                         // Login to Docker Hub and push the image
                         withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS_ID}", usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-                            bat """
-                            docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%
-                            docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
-                            docker push %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
-                            """
+                            if (isUnix()) {
+                                sh """
+                                docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+                                docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}
+                                docker push ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE}
+                                """
+                            } else {
+                                bat """
+                                docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%
+                                docker tag ${DOCKER_IMAGE} %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
+                                docker push %DOCKERHUB_USERNAME%/${DOCKER_IMAGE}
+                                """
+                            }
+                            echo "Docker image pushed to Docker Hub"
                         }
                     } catch (Exception e) {
                         error "Docker push failed: ${e.message}"
@@ -81,10 +113,18 @@ pipeline {
                 script {
                     try {
                         // Stop and redeploy Docker container
-                        bat """
-                        docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
-                        docker run -d ${DOCKER_IMAGE}
-                        """
+                        if (isUnix()) {
+                            sh """
+                            docker stop \$(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
+                            docker run -d ${DOCKER_IMAGE}
+                            """
+                        } else {
+                            bat """
+                            docker stop $(docker ps -q --filter ancestor=${DOCKER_IMAGE}) || true
+                            docker run -d ${DOCKER_IMAGE}
+                            """
+                        }
+                        echo "Application deployed using Docker image: ${DOCKER_IMAGE}"
                     } catch (Exception e) {
                         error "Deployment failed: ${e.message}"
                     }
